@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check that the script is running as root
-if [[ "1000" -ne 0 ]]; then
+if [[ "$EUID" -ne 0  ]]; then
     echo "ERROR: Run this script as root."
     exit 1
 fi
