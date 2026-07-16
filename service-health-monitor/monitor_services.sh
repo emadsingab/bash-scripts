@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Check that the script is running as root
-if [[ "$EUID" -ne 0  ]]; then
+
+if [[ "$EUID" -ne 0 ]]; then
     echo "ERROR: Run this script as root."
     exit 1
 fi
@@ -11,12 +12,12 @@ fi
 
 # Detect the SSH service name based on the available systemd unit
 if systemctl list-unit-files --type=service --no-legend |
-    grep -q '^ssh\.service'; then
+    grep -q '^ssh\.service[[:space:]]'; then
 
     SSH_SERVICE_NAME="ssh"
 
 elif systemctl list-unit-files --type=service --no-legend |
-    grep -q '^sshd\.service'; then
+    grep -q '^sshd\.service[[:space:]]'; then
 
     SSH_SERVICE_NAME="sshd"
 
@@ -27,8 +28,8 @@ fi
 services=("nginx" "docker")
 
 # Add SSH only if an SSH service was found
-if [[ -n "" ]]; then
-    services+=("")
+if [[ -n "$SSH_SERVICE_NAME" ]]; then
+    services+=("$SSH_SERVICE_NAME")
 else
     echo "WARNING: Neither ssh.service nor sshd.service was found."
 fi
@@ -37,38 +38,38 @@ echo "========================================"
 echo "       Service Health Check Report"
 echo "========================================"
 
-for service in ""; do
+for service in "${services[@]}"; do
 
     # Check whether the service exists
     if ! systemctl list-unit-files --type=service --no-legend |
-        grep -q "^\.service"; then
+        grep -q "^${service}\.service[[:space:]]"; then
 
-        echo " does not exist on this system."
+        echo "$service does not exist on this system."
         echo "========================================"
         continue
     fi
 
     # Check whether the service is running
-    if systemctl is-active --quiet ""; then
-        echo " is RUNNING"
+    if systemctl is-active --quiet "$service"; then
+        echo "$service is RUNNING"
 
     else
-        echo " is NOT ACTIVE"
-        echo "Attempting to restart ..."
+        echo "$service is NOT ACTIVE"
+        echo "Attempting to restart $service..."
 
-        if systemctl restart ""; then
+        if systemctl restart "$service"; then
 
             # Verify that the service became active
-            if systemctl is-active --quiet ""; then
-                echo " has been restarted successfully."
+            if systemctl is-active --quiet "$service"; then
+                echo "$service has been restarted successfully."
             else
-                echo "ERROR:  restart command succeeded, but the service is not active."
+                echo "ERROR: $service restart command succeeded, but the service is not active."
             fi
 
         else
-            echo "ERROR: Failed to restart ."
+            echo "ERROR: Failed to restart $service."
             echo "Check logs using:"
-            echo "journalctl -u  --since '10 minutes ago'"
+            echo "journalctl -u $service --since '10 minutes ago'"
         fi
     fi
 
