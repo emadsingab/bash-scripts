@@ -1,0 +1,52 @@
+#!/bin/bash
+
+FILE="/opt/scripts/users.csv"
+
+# Check that the script is running as root
+if [[ "$EUID" -ne 0 ]]; then
+    echo "ERROR: Run this script as root."
+    exit 1
+fi
+
+# Check that the CSV file exists
+if [[ ! -f "$FILE" ]]; then
+    echo "ERROR: File $FILE does not exist."
+    exit 1
+fi
+
+# Skip the CSV header and read username,password
+while IFS=',' read -r username password; do
+
+    # Remove the Windows carriage return character (\r).
+    # You can detect it by running:
+    # cat -v users.csv
+    # It appears as ^M, which represents \r.
+    password="${password%$'\r'}"
+
+    # Skip lines with an empty username or password
+    if [[ -z "$username" || -z "$password" ]]; then
+        echo "WARNING: Skipping invalid or empty line."
+        continue
+    fi
+
+    # Skip the user if it already exists
+    if id "$username" &>/dev/null; then
+        echo "WARNING: User $username already exists. Skipping."
+        continue
+    fi
+
+    # Create the user with a home directory
+    if useradd -m "$username"; then
+
+        # Set the user's password
+        if echo "$username:$password" | chpasswd; then
+            echo "SUCCESS: Created user $username successfully."
+        else
+            echo "ERROR: User $username was created, but setting the password failed."
+        fi
+
+    else
+        echo "ERROR: Failed to create user $username."
+    fi
+
+done < <(tail -n +2 "$FILE")

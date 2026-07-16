@@ -1,0 +1,37 @@
+Linux User & Group Management Script
+Overview
+
+This script provides an interactive interface to manage Linux users and groups using whiptail and fzf.
+
+Requirements
+
+Before running the script, make sure the following packages are installed:
+
+1. Core Dependencies
+sudo apt update
+sudo apt install whiptail fzf
+
+Permissions
+
+You must run the script as root:
+
+sudo ./main.sh
+📁 Project Structure
+project/
+├── main.sh
+└── modules/
+    ├── user_management.sh
+    └── group_management.sh
+	
+How to Run
+chmod +x main.sh
+sudo ./main.sh
+
+Notes
+whiptail → used for UI dialogs
+fzf → used for interactive selection
+Root access is required to manage users/groups
+
+Author
+
+Emad Singab
